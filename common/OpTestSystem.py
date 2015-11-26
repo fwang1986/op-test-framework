@@ -69,13 +69,13 @@ class OpTestSystem():
     ############################################################################
 
     ##
-    # @brief Clear all SDR's in the System
+    # @brief Clear all System Event Log in the System
     #
     # @return BMC_CONST.FW_SUCCESS or BMC_CONST.FW_FAILED
     #
-    def sys_sdr_clear(self):
+    def sys_sel_clear(self):
         try:
-            rc =  self.cv_IPMI.ipmi_sdr_clear()
+            rc =  self.cv_IPMI.ipmi_sel_clear()
         except OpTestError as e:
             return BMC_CONST.FW_FAILED
         return rc
@@ -151,6 +151,31 @@ class OpTestSystem():
         except OpTestError as e:
             return BMC_CONST.FW_FAILED
         return rc
+
+    ##
+    # @Get data from apss
+    #
+    # @return BMC_CONST.FW_SUCCESS or BMC_CONST.FW_FAILED
+    #
+    def sys_apss_get(self):
+        try:
+            rc = self.cv_IPMI.ipmi_apss_get()
+        except OpTestError as e:
+            return BMC_CONST.FW_FAILED
+        return rc
+
+    ##
+    # @brief get all SDR's in the System
+    #
+    # @return BMC_CONST.FW_SUCCESS or BMC_CONST.FW_FAILED
+    #
+    def sys_sdr_get(self):
+        try:
+            rc =  self.cv_IPMI.ipmi_sdr_get()
+        except OpTestError as e:
+            return BMC_CONST.FW_FAILED
+        return rc
+
 
     ############################################################################
     # BMC Interfaces

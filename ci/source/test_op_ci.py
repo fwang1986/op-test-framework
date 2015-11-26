@@ -48,8 +48,8 @@ def test_ipmi_warm_reset():
 def test_bmc_reboot():
     assert op_ci_bmc.bmc_reboot() == 0
 
-def test_ipmi_sdr_clear():
-    assert op_ci_bmc.ipmi_sdr_clear() == 0
+def test_ipmi_sel_clear():
+    assert op_ci_bmc.ipmi_sel_clear() == 0
 
 def test_pnor_img_transfer():
     assert op_ci_bmc.pnor_img_transfer() == 0
@@ -65,3 +65,9 @@ def test_wait_for_working_state():
 
 def test_ipmi_sel_check():
     assert op_ci_bmc.ipmi_sel_check() == 0
+
+def test_ipmi_apss_get():
+    assert op_ci_bmc.ipmi_apss_get() == 0
+
+def test_ipmi_sdr_get():
+    assert op_ci_bmc.ipmi_sdr_get() == 0

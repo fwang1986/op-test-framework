@@ -59,6 +59,68 @@ class OpTestIPMI():
         self.cv_cmd = 'ipmitool -H %s -I lanplus -U %s -P %s ' \
                       % (self.cv_bmcIP, self.cv_bmcUser, self.cv_bmcPwd)
         self.util = OpTestUtil()
+        # apss response data address list
+        self.ResponseDict = {
+                            '0x00' : 'NO_CHANGE' ,       
+                            '0x01' : 'REV_CODE'  ,
+                            '0x02' : 'DAC0'      ,         
+                            '0x03' : 'DAC1'      ,      
+                            '0x04' : 'DAC2'      ,         
+                            '0x05' : 'DAC3'      ,         
+                            '0x06' : 'DAC4'      ,         
+                            '0x07' : 'DAC5'      ,         
+                            '0x08' : 'DAC6'      ,         
+                            '0x09' : 'DAC7'      ,         
+                            '0x0a' : 'NO_COMMAND',         
+                            '0x0b' : 'NO_COMMAND',         
+                            '0x0c' : 'NO_COMMAND',         
+                            '0x0d' : 'NO_COMMAND',         
+                            '0x0e' : 'NO_COMMAND',         
+                            '0x0f' : 'NO_COMMAND',         
+                            '0x10' : 'NO_COMMAND',         
+                            '0x11' : 'NO_COMMAND',         
+                            '0x12' : 'NO_COMMAND',         
+                            '0x13' : 'NO_COMMAND',         
+                            '0x14' : 'ADC_CH0_LSB',       
+                            '0x15' : 'ADC_CH0_MSB',        
+                            '0x16' : 'ADC_CH1_LSB',        
+                            '0x17' : 'ADC_CH1_MSB',        
+                            '0x18' : 'ADC_CH2_LSB',        
+                            '0x19' : 'ADC_CH2_MSB',        
+                            '0x1a' : 'ADC_CH3_LSB',        
+                            '0x1b' : 'ADC_CH3_MSB',        
+                            '0x1c' : 'ADC_CH4_LSB',        
+                            '0x1d' : 'ADC_CH4_MSB',        
+                            '0x1e' : 'ADC_CH5_LSB',        
+                            '0x1f' : 'ADC_CH5_MSB',        
+                            '0x20' : 'ADC_CH6_LSB',        
+                            '0x21' : 'ADC_CH6_MSB',        
+                            '0x22' : 'ADC_CH7_LSB',        
+                            '0x23' : 'ADC_CH7_MSB',        
+                            '0x24' : 'ADC_CH8_LSB',        
+                            '0x25' : 'ADC_CH8_MSB',        
+                            '0x26' : 'ADC_CH9_LSB',        
+                            '0x27' : 'ADC_CH9_MSB',        
+                            '0x28' : 'ADC_CH10_LSB',       
+                            '0x29' : 'ADC_CH10_MSB',       
+                            '0x2a' : 'ADC_CH11_LSB',       
+                            '0x2b' : 'ADC_CH11_MSB',       
+                            '0x2c' : 'ADC_CH12_LSB',       
+                            '0x2d' : 'ADC_CH12_MSB',       
+                            '0x2e' : 'ADC_CH13_LSB',       
+                            '0x2f' : 'ADC_CH13_MSB',       
+                            '0x30' : 'ADC_CH14_LSB',       
+                            '0x31' : 'ADC_CH14_MSB',       
+                            '0x32' : 'ADC_CH15_LSB',       
+                            '0x33' : 'ADC_CH15_MSB',        
+                            '0x34' : 'GPIO_IN0'    ,        
+                            '0x35' : 'GPIO_IN1'    ,        
+                            '0x36' : 'GPIO_MODE0'  ,        
+                            '0x37' : 'GPIO_MODE1'  ,        
+                            '0x38' : 'GPIO_READONLY',       
+                            '0x39' : 'INVALID_CMD',         
+                            '0x3a' : 'INVALID_CMD'
+        }
 
 
     ##
@@ -106,11 +168,11 @@ class OpTestIPMI():
 
 
     ##
-    # @brief This function clears the sensor data
+    # @brief This function clears the system event log
     #
     # @return BMC_CONST.FW_SUCCESS or raise OpTestError
     #
-    def ipmi_sdr_clear(self):
+    def ipmi_sel_clear(self):
 
         output = self._ipmitool_cmd_run(self.cv_cmd + 'sel clear')
         if 'Clearing SEL' in output:
@@ -119,11 +181,11 @@ class OpTestIPMI():
             if 'no entries' in output:
                 return BMC_CONST.FW_SUCCESS
             else:
-                l_msg = "Sensor data still has entries!"
+                l_msg = "Sensor event log still has entries!"
                 print l_msg
                 raise OpTestError(l_msg)
         else:
-            l_msg = "Clearing the sensor data Failed"
+            l_msg = "Clearing the system event log Failed"
             print l_msg
             raise OpTestError(l_msg)
 
@@ -271,6 +333,117 @@ class OpTestIPMI():
             raise OpTestError(l_msg)
         else:
             return BMC_CONST.FW_SUCCESS
+
+    ##
+    # @brief This function get data from apss through i2c bus by using ipmitool and
+    #        store the result to apss log.
+    #
+    # @the response data format is as following:
+    # const void * G_i2cResponseDataPtrs[256] = 
+    # {
+    #     /*  [00]: NO_CHANGE           */ &G_i2cInvalid,
+    #     /*  [01]: REV_CODE            */ &G_apssSoftwareRev,
+    #     /*  [02]: DAC0                */ &G_pwmChan[0],
+    #     /*  [03]: DAC1                */ &G_pwmChan[1],
+    #     /*  [04]: DAC2                */ &G_pwmChan[2],
+    #     /*  [05]: DAC3                */ &G_pwmChan[3],
+    #     /*  [06]: DAC4                */ &G_pwmChan[4],
+    #     /*  [07]: DAC5                */ &G_pwmChan[5],
+    #     /*  [08]: DAC6                */ &G_pwmChan[6],
+    #     /*  [09]: DAC7                */ &G_pwmChan[7],
+    #     /*  [0a]: NO_COMMAND          */ &G_i2cInvalid,
+    #     /*  [0b]: NO_COMMAND          */ &G_i2cInvalid,
+    #     /*  [0c]: NO_COMMAND          */ &G_i2cInvalid,
+    #     /*  [0d]: NO_COMMAND          */ &G_i2cInvalid,
+    #     /*  [0e]: NO_COMMAND          */ &G_i2cInvalid,
+    #     /*  [0f]: NO_COMMAND          */ &G_i2cInvalid,
+    #     /*  [10]: NO_COMMAND          */ &G_i2cInvalid,
+    #     /*  [11]: NO_COMMAND          */ &G_i2cInvalid,
+    #     /*  [12]: NO_COMMAND          */ &G_i2cInvalid,
+    #     /*  [13]: NO_COMMAND          */ &G_i2cInvalid,
+    #     /*  [14]: ADC_CH0_LSB         */ (uint8_t *) &G_adcChan[0],
+    #     /*  [15]: ADC_CH0_MSB         */ &G_i2cInvalid,
+    #     /*  [16]: ADC_CH1_LSB         */ (uint8_t *) &G_adcChan[1],
+    #     /*  [17]: ADC_CH1_MSB         */ &G_i2cInvalid,
+    #     /*  [18]: ADC_CH2_LSB         */ (uint8_t *) &G_adcChan[2],
+    #     /*  [19]: ADC_CH2_MSB         */ &G_i2cInvalid,
+    #     /*  [1a]: ADC_CH3_LSB         */ (uint8_t *) &G_adcChan[3],
+    #     /*  [1b]: ADC_CH3_MSB         */ &G_i2cInvalid,
+    #     /*  [1c]: ADC_CH4_LSB         */ (uint8_t *) &G_adcChan[4],
+    #     /*  [1d]: ADC_CH4_MSB         */ &G_i2cInvalid,
+    #     /*  [1e]: ADC_CH5_LSB         */ (uint8_t *) &G_adcChan[5],
+    #     /*  [1f]: ADC_CH5_MSB         */ &G_i2cInvalid,
+    #     /*  [20]: ADC_CH6_LSB         */ (uint8_t *) &G_adcChan[6],
+    #     /*  [21]: ADC_CH6_MSB         */ &G_i2cInvalid,
+    #     /*  [22]: ADC_CH7_LSB         */ (uint8_t *) &G_adcChan[7],
+    #     /*  [23]: ADC_CH7_MSB         */ &G_i2cInvalid,
+    #     /*  [24]: ADC_CH8_LSB         */ (uint8_t *) &G_adcChan[8],
+    #     /*  [25]: ADC_CH8_MSB         */ &G_i2cInvalid,
+    #     /*  [26]: ADC_CH9_LSB         */ (uint8_t *) &G_adcChan[9],
+    #     /*  [27]: ADC_CH9_MSB         */ &G_i2cInvalid,
+    #     /*  [28]: ADC_CH10_LSB        */ (uint8_t *) &G_adcChan[10],
+    #     /*  [29]: ADC_CH10_MSB        */ &G_i2cInvalid,
+    #     /*  [2a]: ADC_CH11_LSB        */ (uint8_t *) &G_adcChan[11],
+    #     /*  [2b]: ADC_CH11_MSB        */ &G_i2cInvalid,
+    #     /*  [2c]: ADC_CH12_LSB        */ (uint8_t *) &G_adcChan[12],
+    #     /*  [2d]: ADC_CH12_MSB        */ &G_i2cInvalid,
+    #     /*  [2e]: ADC_CH13_LSB        */ (uint8_t *) &G_adcChan[13],
+    #     /*  [2f]: ADC_CH13_MSB        */ &G_i2cInvalid,
+    #     /*  [30]: ADC_CH14_LSB        */ (uint8_t *) &G_adcChan[14],
+    #     /*  [31]: ADC_CH14_MSB        */ &G_i2cInvalid,
+    #     /*  [32]: ADC_CH15_LSB        */ (uint8_t *) &G_adcChan[15],
+    #     /*  [33]: ADC_CH15_MSB        */ &G_i2cInvalid,
+    #     /*  [34]: GPIO_IN0            */ &G_gpioPort[0],
+    #     /*  [35]: GPIO_IN1            */ &G_gpioPort[1],
+    #     /*  [36]: GPIO_MODE0          */ &G_gpioIoConfig[0],
+    #     /*  [37]: GPIO_MODE1          */ &G_gpioIoConfig[1],
+    #     /*  [38]: GPIO_READONLY       */ &G_softOcPins,
+    #     /*  [39]: INVALID_CMD         */ &G_i2cInvalid,
+    #     /*  [3a]: INVALID_CMD         */ &G_i2cInvalid,
+    # };
+    #
+    # @return BMC_CONST.FW_SUCCESS or raise OpTestError
+    #
+    def ipmi_apss_get(self):
+
+        selDesc = 'Transition to Non-recoverable'
+        l_cmd = BMC_CONST.BMC_APSS_DATA
+        logFile = self.cv_ffdcDir + '/' + 'host_apss.log'
+        apssdata = ''
+        apssdatalen = len(self.ResponseDict)
+        for key in range(apssdatalen):
+            addr = '0x%02x'%(key)
+            output = self._ipmitool_cmd_run(self.cv_cmd + l_cmd + addr)
+            if "nable to send" in output:
+                print output
+                raise OpTestError(output)
+            apssdata = apssdata + '|%10s\t|%10s\t|\t0x%02x\t|\r\n'%(addr,self.ResponseDict[addr],int(output,16))
+
+        apssdata = '|%10s\t|%10s\t|%10s\t|\r\n'%('Address', 'Description', 'Value') + '-'*50 + '\r\n' + apssdata
+
+        with open('%s' % logFile, 'w') as f:
+            for line in apssdata:
+                f.write(line)
+
+
+    ##
+    # @brief This function used to get the sensor data and store the result to sdr log
+    #
+    # @return BMC_CONST.FW_SUCCESS or raise OpTestError
+    #
+    def ipmi_sdr_get(self):
+
+        output = self._ipmitool_cmd_run(self.cv_cmd + 'sdr list')
+        logFile = self.cv_ffdcDir + '/' + 'host_sdr.log'
+        if "Unable to" in output:
+            l_msg = "Getting sensor data record Failed"
+            print l_msg
+            raise OpTestError(l_msg)
+        else:
+            with open('%s' % logFile, 'w') as f:
+                for line in output:
+                    f.write(line)
+
 
 
     ##

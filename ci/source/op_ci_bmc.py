@@ -111,12 +111,12 @@ def pnor_img_flash():
     return opTestSys.cv_BMC.pnor_img_flash(testCfg['imagename'])
 
 
-def ipmi_sdr_clear():
-    """This function clears the sensor data
+def ipmi_sel_clear():
+    """This function clears the system event log
 
     :returns: int -- 0: success, 1: error
     """
-    return opTestSys.sys_sdr_clear()
+    return opTestSys.sys_sel_clear()
 
 
 def ipmi_power_off():
@@ -186,3 +186,19 @@ def ipmi_sel_check():
     """
     selDesc = 'Transition to Non-recoverable'
     return opTestSys.sys_sel_check(selDesc)
+
+def ipmi_apss_get():
+    """This function get data from apss through i2c bus by using ipmitool and
+    store the result to apss log.
+
+    :returns: int -- 0: success, 1: error
+    """
+    return opTestSys.sys_apss_get()
+
+def ipmi_sdr_get():
+    """This function get sensor data record data and store the result to sdr log.
+
+    :returns: int -- 0: success, 1: error
+    """
+    return opTestSys.sys_sdr_get()
+
